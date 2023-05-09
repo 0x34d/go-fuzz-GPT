@@ -18,7 +18,6 @@ const (
 	MagentaColor = "\033[35m"
 	Red          = "\033[31m"
 	ResetColor   = "\033[0m"
-	White        = "\033[37m"
 	YellowColor  = "\033[33m"
 )
 

@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"strings"
 
 	"github.com/sashabaranov/go-openai"
 )
@@ -23,7 +24,7 @@ Your secondary objective, if the answer is YES, is to generate a fuzz test funct
 - Use the recommended approach for fuzz testing as introduced in Go 1.18, which involves the "testing" package and the "f.Add" method for providing a seed corpus.
 `
 
-func gptWork(functions string, tests string) {
+func gptWork(funcName string, functions string, tests string) {
 
 	GPTinput := RemoteGitURL + "\n" + functions + "\n" + tests
 
@@ -54,5 +55,9 @@ func gptWork(functions string, tests string) {
 		return
 	}
 
-	fmt.Println(resp.Choices[0].Message.Content)
+	fmt.Println(Red + funcName + ResetColor)
+	fmt.Println(Blue + strings.Repeat("+", 80) + ResetColor)
+	fmt.Println(MagentaColor + resp.Choices[0].Message.Content + ResetColor)
+	fmt.Println(Blue + strings.Repeat("-", 80) + ResetColor)
+	fmt.Println()
 }

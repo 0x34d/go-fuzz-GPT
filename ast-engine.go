@@ -70,7 +70,7 @@ func analysis(goAstFiles []*ast.File, testAstFiles []*ast.File) {
 					functions += "\nFunction:\n" + nodeString(funcDecl) + "\n"
 				}
 				tests = "\nTest functions:" + callDetails
-				gptWork(functions, tests)
+				gptWork(funcName, functions, tests)
 			}
 		}
 	}
