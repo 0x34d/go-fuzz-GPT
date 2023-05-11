@@ -46,12 +46,16 @@ func gptWork(funcName string, functions string, tests string) {
 			},
 			Temperature: 0.5,
 			TopP:        0.5,
-			MaxTokens:   1024,
+			MaxTokens:   8192,
 		},
 	)
 
 	if err != nil {
+		fmt.Println(Red + funcName + ResetColor)
+		fmt.Println(Blue + strings.Repeat("+", 80) + ResetColor)
 		fmt.Printf("ChatCompletion error: %v\n", err)
+		fmt.Println(Blue + strings.Repeat("-", 80) + ResetColor)
+		fmt.Println()
 		return
 	}
 
