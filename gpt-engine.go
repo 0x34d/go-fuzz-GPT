@@ -46,7 +46,6 @@ func gptWork(funcName string, functions string, tests string) {
 			},
 			Temperature: 0.5,
 			TopP:        0.5,
-			MaxTokens:   8192,
 		},
 	)
 
