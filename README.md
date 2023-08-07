@@ -1,4 +1,4 @@
-# go-fuzz-GPT
+# go-fuzz-GPT {THIS SHIT WON"T WORKS UNIT I GET HANDS ON GPT-4 FINE-TUNING) 
 
 Generating fuzz tests for Golang using GPT-4.
 
