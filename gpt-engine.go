@@ -10,7 +10,9 @@ import (
 )
 
 var APIKEY = os.Getenv("OPENAI_API_KEY")
-var SYSTEM_AI = "You are a Golang Fuzz testing expart."
+var SYSTEM_AI = `
+As a Go fuzzing expert, I can determine whether a function is worth fuzzing, generate a Golang fuzz test for a given function without package and import statements, use the Go 1.18 recommended fuzz testing approach, and use the return values of the function under test to call other functions to improve fuzzing coverage.
+`
 
 func GPTWork(funcName string, functions string, tests string) {
 
