@@ -10,27 +10,26 @@ import (
 )
 
 var APIKEY = os.Getenv("OPENAI_API_KEY")
+var SYSTEM_AI = "You are a Golang Fuzz testing expart."
 
-var SYSTEM_AI = `
-As an expert in Golang Fuzz testing, I utilize the official fuzzing framework introduced in Go 1.18 to create fuzz tests.
-Your primary goal is to determine whether a given function, based on its implementation and associated tests, along with the corresponding GitHub link, is worth fuzzing. Focus on identifying if the function handles complex input data, as such functions are generally more valuable for fuzzing. Provide your answer as either YES or NO.
+func GPTWork(funcName string, functions string, tests string) {
 
-Your secondary objective, if the answer is YES, is to generate a fuzz test function. When creating the fuzz test function, keep the following in mind:
-- The output should consist solely of the fuzz test function code without package and import statements.
-- If you lack accurate information about the f.Add seed corpus, do not include it.
-- Examine the test function for potential seed corpus.
-- Avoid performing error checking if it is not necessary.
-- Utilize return values from the function under test to call other functions, based on related examples from the test function, in order to enhance fuzzing coverage.
-- Use the recommended approach for fuzz testing as introduced in Go 1.18, which involves the "testing" package and the "f.Add" method for providing a seed corpus.
-`
+	Blacklist := []string{"Add", "Remove", "Get", "Set", "Update", "Delete", "Save"}
+	for _, name := range Blacklist {
+		if strings.Contains(strings.ToLower(funcName), strings.ToLower(name)) {
+			fmt.Println(RedColor + "Sorry, this function is in the blacklist. You can manually check it. : `" + funcName + "`\n" + ResetColor)
+			return
+		}
+	}
 
-func gptWork(funcName string, functions string, tests string) {
+	gptinput := functions + "\n" + tests
 
-	GPTinput := RemoteGitURL + "\n" + functions + "\n" + tests
+	fmt.Println(RedColor + funcName + ResetColor)
+	fmt.Println(BlueColor + strings.Repeat("+", 80) + ResetColor)
 
 	client := openai.NewClient(APIKEY)
-
 	resp, err := client.CreateChatCompletion(
+
 		context.Background(),
 		openai.ChatCompletionRequest{
 			Model: openai.GPT4,
@@ -41,26 +40,18 @@ func gptWork(funcName string, functions string, tests string) {
 				},
 				{
 					Role:    openai.ChatMessageRoleUser,
-					Content: GPTinput,
+					Content: gptinput,
 				},
 			},
-			Temperature: 0.5,
-			TopP:        0.5,
+			Temperature: 0.1,
 		},
 	)
 
 	if err != nil {
-		fmt.Println(Red + funcName + ResetColor)
-		fmt.Println(Blue + strings.Repeat("+", 80) + ResetColor)
-		fmt.Printf("ChatCompletion error: %v\n", err)
-		fmt.Println(Blue + strings.Repeat("-", 80) + ResetColor)
-		fmt.Println()
-		return
+		fmt.Printf(CyanColor+"ChatCompletion error: %v\n"+ResetColor, err)
+	} else {
+		fmt.Println(CyanColor + resp.Choices[0].Message.Content + ResetColor)
 	}
 
-	fmt.Println(Red + funcName + ResetColor)
-	fmt.Println(Blue + strings.Repeat("+", 80) + ResetColor)
-	fmt.Println(MagentaColor + resp.Choices[0].Message.Content + ResetColor)
-	fmt.Println(Blue + strings.Repeat("-", 80) + ResetColor)
-	fmt.Println()
+	fmt.Println(BlueColor + strings.Repeat("-", 80) + "\n" + ResetColor)
 }

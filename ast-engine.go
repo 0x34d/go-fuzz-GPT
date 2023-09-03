@@ -8,33 +8,31 @@ import (
 	"go/token"
 )
 
-func getHarnessFunction(files []*ast.File) []*ast.FuncDecl {
+// Get harness functions
+func GetHarnessFunction(codefiles []*ast.File) []*ast.FuncDecl {
 	var harnessFuncs []*ast.FuncDecl
 
-	for _, file := range files {
-		// Iterate over all function declarations in the file
-		for _, decl := range file.Decls {
-			// Check if the declaration is a function declaration
-			funcDecl, ok := decl.(*ast.FuncDecl)
+	for _, codefile := range codefiles {
+		for _, decl := range codefile.Decls {
+			funcDecl, ok := decl.(*ast.FuncDecl) // check if `decl` is a `ast.FuncDecl`.
 			if !ok {
 				continue
 			}
 
-			// Check if the function has string, []byte, or io.Reader arguments
 			for _, field := range funcDecl.Type.Params.List {
-				switch fieldType := field.Type.(type) {
+				switch fieldtype := field.Type.(type) {
 				case *ast.Ident:
-					if fieldType.Name == "string" {
+					if fieldtype.Name == "string" {
 						harnessFuncs = append(harnessFuncs, funcDecl)
 						break
 					}
 				case *ast.ArrayType:
-					if arrayType, ok := fieldType.Elt.(*ast.Ident); ok && arrayType.Name == "byte" {
+					if arrayType, ok := fieldtype.Elt.(*ast.Ident); ok && arrayType.Name == "byte" {
 						harnessFuncs = append(harnessFuncs, funcDecl)
 						break
 					}
 				case *ast.SelectorExpr:
-					if xIdent, ok := fieldType.X.(*ast.Ident); ok && xIdent.Name == "io" && fieldType.Sel.Name == "Reader" {
+					if xIdent, ok := fieldtype.X.(*ast.Ident); ok && xIdent.Name == "io" && fieldtype.Sel.Name == "Reader" {
 						harnessFuncs = append(harnessFuncs, funcDecl)
 						break
 					}
@@ -46,88 +44,65 @@ func getHarnessFunction(files []*ast.File) []*ast.FuncDecl {
 	return harnessFuncs
 }
 
-func analysis(goAstFiles []*ast.File, testAstFiles []*ast.File) {
-	goHarnessFuncs := getHarnessFunction(goAstFiles)
+// Get test function corresponding to the function name
+func countFunctionCalls(funcname string, testfiles []*ast.File) (int, string) {
+	var counter int
+	var callDetails string
+	var funcstack []*ast.FuncDecl
 
-	// Print the names and receivers of the harness functions
-	if len(goHarnessFuncs) > 0 {
-		funcMap := make(map[string][]*ast.FuncDecl)
-
-		// Group similar function names with different signatures
-		for _, funcDecl := range goHarnessFuncs {
-			funcName := funcDecl.Name.Name
-			funcMap[funcName] = append(funcMap[funcName], funcDecl)
-		}
-
-		// Collect functions with tests as strings
-		for funcName, funcDecls := range funcMap {
-			count, callDetails := countFunctionCalls(funcName, testAstFiles)
-
-			// Process only functions with at least one test
-			if count > 0 {
-				var functions, tests string
-				for _, funcDecl := range funcDecls {
-					functions += "\nFunction:\n" + nodeString(funcDecl) + "\n"
-				}
-				tests = "\nTest functions:" + callDetails
-				gptWork(funcName, functions, tests)
-			}
-		}
-	}
-}
-
-func countFunctionCalls(funcName string, testAstFiles []*ast.File) (int, string) {
-	counter := 0
-	callDetails := ""
-
-	for _, testFile := range testAstFiles {
-		var funcStack []*ast.FuncDecl
-
-		ast.Inspect(testFile, func(n ast.Node) bool {
+	for _, testfile := range testfiles {
+		// Inspect the AST of the test file
+		ast.Inspect(testfile, func(n ast.Node) bool {
+			// Append function declaration to the function stack
 			if f, ok := n.(*ast.FuncDecl); ok {
-				// Push the function onto the stack when we enter its scope
-				funcStack = append(funcStack, f)
+				funcstack = append(funcstack, f)
 			}
 
+			// Check if the node is a function call expression
 			call, ok := n.(*ast.CallExpr)
 			if !ok {
 				return true
 			}
 
-			// Check if the function call is an ast.Ident or ast.SelectorExpr
+			// Not more than 3 test functions
+			if counter == 3 {
+				return true
+			}
+
 			switch fn := call.Fun.(type) {
+			// Standalone function call
 			case *ast.Ident:
-				if fn.Name == funcName {
+				if fn.Name == funcname {
 					counter++
-					if len(funcStack) > 0 {
-						// Get the enclosing function from the top of the stack
-						enclosingFunc := funcStack[len(funcStack)-1]
+					if len(funcstack) > 0 {
+						enclosingFunc := funcstack[len(funcstack)-1]
 						callDetails += fmt.Sprintf("\n%s\n", nodeString(enclosingFunc))
 					}
 				}
+			// Method function call
 			case *ast.SelectorExpr:
-				if fn.Sel.Name == funcName {
+				if fn.Sel.Name == funcname {
 					counter++
-					if len(funcStack) > 0 {
-						// Get the enclosing function from the top of the stack
-						enclosingFunc := funcStack[len(funcStack)-1]
+					if len(funcstack) > 0 {
+						enclosingFunc := funcstack[len(funcstack)-1]
 						callDetails += fmt.Sprintf("\n%s\n", nodeString(enclosingFunc))
 					}
 				}
 			}
 
-			// Pop the function from the stack when we exit its scope
-			if _, ok := n.(*ast.FuncDecl); ok && len(funcStack) > 0 {
-				funcStack = funcStack[:len(funcStack)-1]
+			// Pop the function declaration from the function stack
+			if _, ok := n.(*ast.FuncDecl); ok && len(funcstack) > 0 {
+				funcstack = funcstack[:len(funcstack)-1]
 			}
 
 			return true
 		})
 	}
+
 	return counter, callDetails
 }
 
-// Helper function to stringify an AST node
+// Get the string representation of the node
 func nodeString(node ast.Node) string {
 	var buf bytes.Buffer
 	err := printer.Fprint(&buf, token.NewFileSet(), node)
@@ -135,4 +110,31 @@ func nodeString(node ast.Node) string {
 		return ""
 	}
 	return buf.String()
+}
+
+// Analysis the AST
+func Analysis(codeast []*ast.File, testast []*ast.File) {
+	harnessFuncs := GetHarnessFunction(codeast)
+
+	if len(harnessFuncs) > 0 {
+		funcMap := make(map[string][]*ast.FuncDecl)
+
+		for _, funcDecl := range harnessFuncs {
+			funcName := funcDecl.Name.Name
+			funcMap[funcName] = append(funcMap[funcName], funcDecl)
+		}
+
+		for funcName, funcDecls := range funcMap {
+			count, callDetails := countFunctionCalls(funcName, testast)
+
+			if count > 0 {
+				var functions, tests string
+				for _, funcDecl := range funcDecls {
+					functions += "\nFunction:\n" + nodeString(funcDecl) + "\n"
+				}
+				tests = "\nTest functions:" + callDetails
+				GPTWork(funcName, functions, tests)
+			}
+		}
+	}
 }

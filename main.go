@@ -6,147 +6,99 @@ import (
 	"go/parser"
 	"go/token"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"strings"
 )
 
+// Constants for color output
 const (
-	Blue         = "\033[34m"
-	CyanColor    = "\033[36m"
-	GreenColor   = "\033[32m"
-	MagentaColor = "\033[35m"
-	Red          = "\033[31m"
-	ResetColor   = "\033[0m"
-	YellowColor  = "\033[33m"
+	ResetColor = "\033[0m"
+	RedColor   = "\033[31m"
+	BlueColor  = "\033[34m"
+	CyanColor  = "\033[36m"
+	GreenColor = "\033[32m"
 )
 
-var RemoteGitURL string
-
-func getRemoteOriginURL(repoPath string) {
-	cmd := exec.Command("git", "config", "--get", "remote.origin.url")
-	cmd.Dir = repoPath
-
-	output, err := cmd.Output()
-	if err != nil {
-		RemoteGitURL = "This project does not have any public repo"
-		return
-	}
-
-	url := strings.TrimSpace(string(output))
-	RemoteGitURL = url
-}
-
-func parseFiles(files []string) ([]*ast.File, error) {
+// Parse the files to get AST
+func ParseFiles(files []string) ([]*ast.File, error) {
+	var astfiles []*ast.File
 	fset := token.NewFileSet()
 
-	var astFiles []*ast.File
-
 	for _, file := range files {
-		astFile, err := parser.ParseFile(fset, file, nil, 0)
+		astfile, err := parser.ParseFile(fset, file, nil, 0)
 		if err != nil {
-			return nil, fmt.Errorf("error parsing file %s: %v", file, err)
+			return nil, fmt.Errorf("error: %s: %v", file, err)
 		}
 
-		astFiles = append(astFiles, astFile)
+		astfiles = append(astfiles, astfile)
 	}
 
-	return astFiles, nil
+	return astfiles, nil
 }
 
-func separateFiles(files []string) (goFiles []string, testFiles []string) {
+// Separate code.go and _test.go files
+func SeparateFiles(files []string) (codefiles []string, testfiles []string) {
 	for _, file := range files {
 		if strings.HasSuffix(file, "_test.go") {
-			testFiles = append(testFiles, file)
+			testfiles = append(testfiles, file)
 		} else {
-			goFiles = append(goFiles, file)
+			codefiles = append(codefiles, file)
 		}
 	}
 
-	return goFiles, testFiles
+	return codefiles, testfiles
 }
 
-func processFiles(dir string, files []string) {
-	goFiles, testFiles := separateFiles(files)
-
-	fmt.Printf(GreenColor+"\nDirectory: %s\n"+ResetColor, dir)
-
-	if len(goFiles) > 0 {
-		fmt.Println(YellowColor + "Go Files:" + ResetColor)
-		for _, file := range goFiles {
-			fmt.Printf(YellowColor+"\t%s\n"+ResetColor, file)
-		}
-	}
-
-	if len(testFiles) > 0 {
-		fmt.Println(CyanColor + "Test Files:" + ResetColor)
-		for _, file := range testFiles {
-			fmt.Printf(CyanColor+"\t%s\n"+ResetColor, file)
-		}
-		fmt.Println()
-	}
-
-	goAstFiles, goErr := parseFiles(goFiles)
-	testAstFiles, testErr := parseFiles(testFiles)
-
-	if goErr != nil {
-		fmt.Printf("Error parsing go files: %v\n", goErr)
+// Process files and send for analysis
+func ProcessFiles(files []string) {
+	codefiles, testfiles := SeparateFiles(files)
+	if len(codefiles) == 0 || len(testfiles) == 0 {
 		return
 	}
 
-	if testErr != nil {
-		fmt.Printf("Error parsing test files: %v\n", testErr)
+	codeast, codeerr := ParseFiles(codefiles)
+	testast, testerr := ParseFiles(testfiles)
+	if codeerr != nil || testerr != nil {
 		return
 	}
 
-	analysis(goAstFiles, testAstFiles)
+	Analysis(codeast, testast)
 }
 
-func processDirectory(path string) {
-	dirEntry, err := os.ReadDir(path)
-	if err != nil {
-		fmt.Printf("Error reading directory: %v\n", err)
-		return
-	}
-
+// Process Dir structure
+func ProcessDir(path string) {
 	var files []string
-	for _, entry := range dirEntry {
-		entryPath := filepath.Join(path, entry.Name())
+
+	direntry, err := os.ReadDir(path)
+	if err != nil {
+		fmt.Printf(RedColor+"Error reading directory: %v\n"+ResetColor, err)
+		return
+	}
+
+	for _, entry := range direntry {
+		entrypath := filepath.Join(path, entry.Name())
+
 		if entry.IsDir() {
-			processDirectory(entryPath)
-		} else {
-			if strings.HasSuffix(entry.Name(), ".go") {
-				files = append(files, entryPath)
-			}
+			ProcessDir(entrypath)
+			continue
+		}
+
+		if strings.HasSuffix(entry.Name(), ".go") {
+			files = append(files, entrypath)
 		}
 	}
 
 	if len(files) > 0 {
-		getRemoteOriginURL(path)
-		processFiles(path, files)
+		fmt.Printf(GreenColor+"\nDirectory: %s\n"+ResetColor, path)
+		ProcessFiles(files)
 	}
 }
 
+// Main function
 func main() {
-	args := os.Args
-
-	if len(args) != 2 {
-		fmt.Println("Provide input as <Directory>")
+	if len(os.Args) != 2 {
+		fmt.Printf(RedColor + "Provide input as <dir> \n" + ResetColor)
 		return
 	}
-
-	path := args[1]
-	fileInfo, err := os.Stat(path)
-	if err != nil {
-		fmt.Printf("Error: %v\n", err)
-		return
-	}
-
-	if !fileInfo.IsDir() {
-		fmt.Printf("The provided path is not a directory: %s\n", path)
-		return
-	}
-
-	fmt.Printf("Processing directory: %s\n", path)
-	processDirectory(path)
+	ProcessDir(os.Args[1])
 }
