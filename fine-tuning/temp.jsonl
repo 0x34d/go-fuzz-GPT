@@ -1,0 +1,14 @@
+{
+    "messages": [
+        { "role": "system", "content": "You are a Golang fuzzing expert, check if this function is worth fuzzing." },
+        { "role": "user", "content": "" },
+        { "role": "assistant", "content": "" }
+    ]
+}
+{
+    "messages": [
+        { "role": "system", "content": "You are a Golang fuzzing expert, Create fuzz tests." },
+        { "role": "user", "content": "" },
+        { "role": "assistant", "content": "" }
+    ]
+}

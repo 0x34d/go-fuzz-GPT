@@ -10,31 +10,19 @@ import (
 )
 
 var APIKEY = os.Getenv("OPENAI_API_KEY")
-var SYSTEM_AI = `
-As a Go fuzzing expert, I can determine whether a function is worth fuzzing, generate a Golang fuzz test for a given function without package and import statements, use the Go 1.18 recommended fuzz testing approach, and use the return values of the function under test to call other functions to improve fuzzing coverage.
-`
+var SYSTEM_AI = `You are a Golang fuzzing expert, check if this function is worth fuzzing.`
 
 func GPTWork(funcName string, functions string, tests string) {
 
-	Blacklist := []string{"Add", "Remove", "Get", "Set", "Update", "Delete", "Save"}
-	for _, name := range Blacklist {
-		if strings.Contains(strings.ToLower(funcName), strings.ToLower(name)) {
-			fmt.Println(RedColor + "Sorry, this function is in the blacklist. You can manually check it. : `" + funcName + "`\n" + ResetColor)
-			return
-		}
-	}
-
-	gptinput := functions + "\n" + tests
-
-	fmt.Println(RedColor + funcName + ResetColor)
-	fmt.Println(BlueColor + strings.Repeat("+", 80) + ResetColor)
+	fmt.Println(BlueColor + strings.Repeat("+", 80) + "" + ResetColor)
+	fmt.Println(RedColor + "Function Name:" + funcName + ResetColor)
 
 	client := openai.NewClient(APIKEY)
-	resp, err := client.CreateChatCompletion(
 
+	resp, err := client.CreateChatCompletion(
 		context.Background(),
 		openai.ChatCompletionRequest{
-			Model: openai.GPT4,
+			Model: "ft:gpt-3.5-turbo-0613:0x34d::7yZLjRMZ",
 			Messages: []openai.ChatCompletionMessage{
 				{
 					Role:    openai.ChatMessageRoleSystem,
@@ -42,10 +30,10 @@ func GPTWork(funcName string, functions string, tests string) {
 				},
 				{
 					Role:    openai.ChatMessageRoleUser,
-					Content: gptinput,
+					Content: functions,
 				},
 			},
-			Temperature: 0.1,
+			Temperature: 0.5,
 		},
 	)
 
@@ -57,3 +45,26 @@ func GPTWork(funcName string, functions string, tests string) {
 
 	fmt.Println(BlueColor + strings.Repeat("-", 80) + "\n" + ResetColor)
 }
+
+/*
+	gptinput := functions + "\n\n\n" + tests
+	jsonString, _ := json.Marshal(gptinput)
+	fmt.Println(BlueColor + "GPT-3 Input: " + ResetColor + string(gptinput))
+	fmt.Println(BlueColor + "GPT-3 Input: " + ResetColor + string(jsonString))
+*/
+
+/*
+	if counter == 2 {
+		return true
+	}
+	if len(funcDecls[0].Type.Params.List) > 2 {
+		return
+	}
+	Blacklist := []string{"Add", "Remove", "Get", "Set", "Update", "Delete", "Save", "Call", "New"}
+	for _, name := range Blacklist {
+		if strings.Contains(strings.ToLower(funcName), strings.ToLower(name)) {
+			fmt.Println(RedColor + "Blacklist name: `" + funcName + "`\n" + ResetColor)
+			return
+		}
+	}
+*/

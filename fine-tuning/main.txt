@@ -1,0 +1,41 @@
+Train:
+  - https://openai.com/blog/gpt-3-5-turbo-fine-tuning-and-api-updates
+  - https://platform.openai.com/docs/guides/fine-tuning
+  - https://go.dev/security/fuzz/
+  - https://www.youtube.com/watch?v=2Pd0YExeC5o
+
+PR:
+  - https://github.com/go-ldap/ldap/pull/448
+
+  - https://github.com/plgd-dev/go-coap/pull/461
+  - https://github.com/rabbitmq/amqp091-go/pull/212
+  - https://github.com/fxamacker/cbor/pull/415
+  - https://github.com/insomniacslk/dhcp/pull/508
+  - https://github.com/ProtonMail/proton-bridge/pull/387
+  - https://github.com/ProtonMail/gluon/pull/341
+  - https://github.com/vechain/thor/pull/567
+  - https://github.com/0x34d/project/tree/main/avalanche
+  - https://github.com/0x34d/project/tree/main/go-algorand
+  - https://github.com/0x34d/project/tree/main/goloop
+  - https://github.com/google/oss-fuzz/tree/master/projects/protoc-gen-validate
+  - https://github.com/google/oss-fuzz/tree/master/projects/atomic
+  - https://github.com/google/oss-fuzz/tree/master/projects/clock
+  - https://github.com/google/oss-fuzz/tree/master/projects/demangle
+  - https://github.com/google/oss-fuzz/tree/master/projects/dgraph
+  - https://github.com/google/oss-fuzz/tree/master/projects/fsnotify
+  - https://github.com/google/oss-fuzz/tree/master/projects/go-cmp
+  - https://github.com/google/oss-fuzz/tree/master/projects/go-humanize
+  - https://github.com/google/oss-fuzz/tree/master/projects/go-ole
+  - https://github.com/google/oss-fuzz/tree/master/projects/go-pprof
+  - https://github.com/google/oss-fuzz/tree/master/projects/go-readline
+  - https://github.com/google/oss-fuzz/tree/master/projects/go-shlex
+  - https://github.com/google/oss-fuzz/tree/master/projects/go-yaml
+  - https://github.com/google/oss-fuzz/tree/master/projects/gogo-protobuf
+  - https://github.com/google/oss-fuzz/tree/master/projects/golang-appengine
+  - https://github.com/google/oss-fuzz/tree/master/projects/gopsutil
+  - https://github.com/google/oss-fuzz/tree/master/projects/opencensus-go
+  - https://github.com/google/oss-fuzz/tree/master/projects/pborman-uuid
+  - https://github.com/google/oss-fuzz/tree/master/projects/publicsuffix-list
+  - ~/project/cold/go-waku/
+  - ~/project/okx/exchain
+  - ~/project/okx/okbchain

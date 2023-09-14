@@ -64,11 +64,6 @@ func countFunctionCalls(funcname string, testfiles []*ast.File) (int, string) {
 				return true
 			}
 
-			// Not more than 3 test functions
-			if counter == 3 {
-				return true
-			}
-
 			switch fn := call.Fun.(type) {
 			// Standalone function call
 			case *ast.Ident:
@@ -128,12 +123,11 @@ func Analysis(codeast []*ast.File, testast []*ast.File) {
 			count, callDetails := countFunctionCalls(funcName, testast)
 
 			if count > 0 {
-				var functions, tests string
+				var functions string
 				for _, funcDecl := range funcDecls {
-					functions += "\nFunction:\n" + nodeString(funcDecl) + "\n"
+					functions += nodeString(funcDecl) + "\n"
 				}
-				tests = "\nTest functions:" + callDetails
-				GPTWork(funcName, functions, tests)
+				GPTWork(funcName, functions, callDetails)
 			}
 		}
 	}
