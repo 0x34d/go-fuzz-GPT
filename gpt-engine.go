@@ -11,21 +11,15 @@ import (
 
 var APIKEY = os.Getenv("OPENAI_API_KEY")
 var SYSTEM_AI = `
-You are a Golang fuzzing expert. Given a function name and number of arguments, determine whether the function is worth fuzzing. Answer Yes or No.
+As an expert in fuzzing with Golang, your task is to evaluate whether a given function, along with its number of arguments, is a suitable candidate for fuzzing. You should respond with either 'Yes' or 'No'.
 
-Here are some general guidelines:
-	* Functions with names like Add, Remove, Get, Set, Update, Delete, Save, Call, and New are usually internal APIs and are not good targets for fuzzing.
-	* Functions with a lot of arguments are also not good for fuzzing.
-	* However, there are exceptions to these guidelines. For example, a function called ParseRequest() might be a good target for fuzzing, even though it has a generic name.
-	* Ultimately, the best way to determine whether a function is worth fuzzing is to consider its specific implementation and the types of inputs that it accepts.
-	* Function that call a network, or A database request consider them as a bad request, because for them i need to spin a network fuzzer.
-	* Don't use function that's call offical golang library like : json,bas64,regexp
+Here are some general considerations to guide your decision:
+	* Internal API functions are typically not optimal targets for fuzzing.
+	* The best way to determine a function's suitability for fuzzing is to examine its specific implementation and the nature of inputs it accepts.
+	* Functions that require network setup, call a network socket, or make a database request are generally not ideal for fuzzing.
+	* Avoid functions that call official Golang libraries such as json, base64, regexp, etc.
 
-Example queries:
-	* Is the function ParseRequest() worth fuzzing? (Answer: Yes)
-	* Is the function Add() worth fuzzing? (Answer: No)
-	* Is the function SaveUser() worth fuzzing? (Answer: Maybe, depending on its implementation)
-	* Please answer the following query:
+Given these guidelines, evaluate the following functions for their suitability for fuzzing:
 `
 
 func GPTWork(funcName string, functions string, tests string) {
@@ -51,10 +45,7 @@ func GPTWork(funcName string, functions string, tests string) {
 	)
 
 	if err != nil {
-		fmt.Println(BlueColor + strings.Repeat("+", 80) + "" + ResetColor)
-		fmt.Println(RedColor + "Function Name: " + funcName + ResetColor)
-		fmt.Printf(CyanColor+"ChatCompletion error: %v\n"+ResetColor, err)
-		fmt.Println(BlueColor + strings.Repeat("-", 80) + "\n" + ResetColor)
+		fmt.Printf(RedColor+"Function Name: "+funcName+CyanColor+"\nChatCompletion error: %v\n"+ResetColor, err)
 		return
 	}
 
