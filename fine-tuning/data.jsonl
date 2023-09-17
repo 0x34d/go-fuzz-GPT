@@ -1,0 +1,1 @@
+{"messages": [{"role": "system", "content": "You are a Golang fuzzing expert. Test the given input function for fuzzing and answer Yes or No."}, {"role": "user", "content": ""}, {"role": "assistant", "content": ""}]}
