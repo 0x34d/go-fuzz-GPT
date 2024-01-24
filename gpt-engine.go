@@ -21,8 +21,15 @@ Here are some general considerations to guide your decision:
 
 Given these guidelines, evaluate the following functions for their suitability for fuzzing:
 `
+//If Yes, Generate a Golang fuzz test for given function, use the Go 1.18 recommended fuzz testing approach;
+//- If you lack accurate information about the f.Add seed corpus, do not include it.
+//- Examine the test function for potential seed corpus.
+//- Avoid performing error checking if it is not necessary.
+//- Utilize return values from the function under test to call other functions, based on related examples from the test function, in order to enhance fuzzing coverage.
+//- Use the recommended approach for fuzz testing as introduced in Go 1.18, which involves the "testing" package and the "f.Add" method for providing a seed corpus.
 
 func GPTWork(funcName string, functions string, tests string) {
+	gptinput := functions + "\n" + tests
 
 	client := openai.NewClient(APIKEY)
 
@@ -37,7 +44,7 @@ func GPTWork(funcName string, functions string, tests string) {
 				},
 				{
 					Role:    openai.ChatMessageRoleUser,
-					Content: functions,
+					Content: gptinput,
 				},
 			},
 			Temperature: 0.5,
