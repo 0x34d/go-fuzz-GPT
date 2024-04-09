@@ -5,30 +5,23 @@ import (
 	"fmt"
 	"os"
 	"strings"
+	"time"
 
 	"github.com/sashabaranov/go-openai"
 )
 
 var APIKEY = os.Getenv("OPENAI_API_KEY")
 var SYSTEM_AI = `
-As an expert in fuzzing with Golang, your task is to evaluate whether a given function, along with its number of arguments, is a suitable candidate for fuzzing. You should respond with either 'Yes' or 'No'.
-
-Here are some general considerations to guide your decision:
-	* Internal API functions are typically not optimal targets for fuzzing.
-	* The best way to determine a function's suitability for fuzzing is to examine its specific implementation and the nature of inputs it accepts.
-	* Functions that require network setup, call a network socket, or make a database request are generally not ideal for fuzzing.
-	* Avoid functions that call official Golang libraries such as json, base64, regexp, etc.
-
-Given these guidelines, evaluate the following functions for their suitability for fuzzing:
+Determine if a given Golang function should undergo fuzz testing. Answer with 'Yes' or 'No'.
+Internal API functions typically do not benefit from fuzzing.
+Functions that unmarshal, decode, or parse are good candidates; those that marshal or encode are not.
+Functions such as get, set, add, remove, delete, create, destroy, and init are unsuitable for fuzz testing.
+Network setup functions are also poor choices for fuzz testing.
+Assess a function's implementation and the nature of its inputs to decide if it is appropriate for fuzz testing.
 `
-//If Yes, Generate a Golang fuzz test for given function, use the Go 1.18 recommended fuzz testing approach;
-//- If you lack accurate information about the f.Add seed corpus, do not include it.
-//- Examine the test function for potential seed corpus.
-//- Avoid performing error checking if it is not necessary.
-//- Utilize return values from the function under test to call other functions, based on related examples from the test function, in order to enhance fuzzing coverage.
-//- Use the recommended approach for fuzz testing as introduced in Go 1.18, which involves the "testing" package and the "f.Add" method for providing a seed corpus.
 
 func GPTWork(funcName string, functions string, tests string) {
+
 	gptinput := functions + "\n" + tests
 
 	client := openai.NewClient(APIKEY)
@@ -36,7 +29,7 @@ func GPTWork(funcName string, functions string, tests string) {
 	resp, err := client.CreateChatCompletion(
 		context.Background(),
 		openai.ChatCompletionRequest{
-			Model: "gpt-4",
+			Model: "gpt-4-0125-preview",
 			Messages: []openai.ChatCompletionMessage{
 				{
 					Role:    openai.ChatMessageRoleSystem,
@@ -47,7 +40,7 @@ func GPTWork(funcName string, functions string, tests string) {
 					Content: gptinput,
 				},
 			},
-			Temperature: 0.5,
+			Temperature: 0.2,
 		},
 	)
 
@@ -56,12 +49,14 @@ func GPTWork(funcName string, functions string, tests string) {
 		return
 	}
 
-	if resp.Choices[0].Message.Content == "No" {
-		return
-	}
+	//	if resp.Choices[0].Message.Content == "No" {
+	//		return
+	//	}
 
 	fmt.Println(BlueColor + strings.Repeat("+", 80) + "" + ResetColor)
 	fmt.Println(RedColor + "Function Name: " + funcName + ResetColor)
 	fmt.Println(CyanColor + resp.Choices[0].Message.Content + ResetColor)
 	fmt.Println(BlueColor + strings.Repeat("-", 80) + "\n" + ResetColor)
+
+	time.Sleep(2 * time.Second)
 }
